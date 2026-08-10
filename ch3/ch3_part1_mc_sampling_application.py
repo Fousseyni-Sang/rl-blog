@@ -407,7 +407,7 @@ from typing import Callable
 from abc import ABC
 class MonteCarloSampling(ABC):
 
-    def __init__(self, env:GridEnv, max_rollout_depth:int=100, save_freq:int=5000):
+    def __init__(self, env:GridEnv, max_rollout_depth:int=100):
 
         """self.value_array = np.zeros(env.state_space.shape[0])
         self.prev_value_array = self.value_array.copy()"""
@@ -426,7 +426,6 @@ class MonteCarloSampling(ABC):
 
         self.alpha = 0.2
 
-        self.save_frequency = save_freq
 
     def reset_value(self):
         self.value_array = np.zeros(env.state_space.shape[0])
@@ -436,7 +435,7 @@ class MonteCarloSampling(ABC):
 
         return
 
-    def run(self, num_rollout:int=30, first_visit:bool=True, incremental_update:bool=False, sweep_strategy:str="exhaustive", num_episodes:int=1000, value_array_file_name:str="value_array"):
+    def run(self, num_rollout:int=30, first_visit:bool=True, incremental_update:bool=False, sweep_strategy:str="exhaustive", num_episodes:int=1000, value_array_file_name:str="value_array", save_frequency:int=5000):
 
         """
             This run the MC sampling method by looping through all states until convergence. Stop when convergence is achieved. Specifically, this allows to choose the state sampling strategy. Exhaustive sweep, random sweep, bandit-like sweep, etc
@@ -475,7 +474,7 @@ class MonteCarloSampling(ABC):
             self.value_delta.append(delta_v)
             self.prev_value_array = self.value_array.copy()
 
-            if iter % self.save_frequency == 0:
+            if iter % save_frequency == 0:
                 self.save(self.value_array, file_name=value_array_file_name)
 
             print(f"=============================================")
@@ -717,33 +716,9 @@ angle_step = 45 # degree
 rb = Robot(1.1, angle_step)
 env = GridEnv([-10.0, 10.0], [-10.0, 10.0], 1., angle_step, rb, np.array([0.0, 0.0]))
 mcs = MonteCarloSampling(env, max_rollout_depth=10000)
-test_state = np.array([-10., 10., 45.0])
+test_state = np.array([-1., -1., 45.0])
 test_state_idx = mcs.env.state_to_idx(test_state)
 mcs.transition_maxtrix[mcs.state_to_str(test_state)]
-
-value_list_first = []
-mcs.reset_value()
-for i in range(500):
-    mcs.mc_prediction(test_state, mcs.rollout_policy_rand, num_rollout=1, first_visit=True, plot=False)
-    #value_test_state_evolution =
-    #print(mcs.value_array[mcs.env.state_to_idx(test_state)])
-    value_list_first.append(mcs.value_array[test_state_idx])
-
-value_list_every = []
-mcs.reset_value()
-for i in range(500):
-    mcs.mc_prediction(test_state, mcs.rollout_policy_rand, num_rollout=1, first_visit=False, plot=False)
-    #value_test_state_evolution =
-    #print(mcs.value_array[mcs.env.state_to_idx(test_state)])
-    value_list_every.append(mcs.value_array[test_state_idx])
-
-plt.plot(value_list_first, label=f"first visit")
-plt.plot(value_list_every, label=f"every visit")
-plt.hlines(valiter.value_array[test_state_idx], [0], [len(value_list_every)-1], label="value iteration", colors="red")
-plt.title(f"evolution of value of state {test_state}")
-plt.ylabel("value(s)")
-plt.xlabel(f"number of episodes from state {test_state}")
-plt.legend()
 
 """### Monte Carlo Prediction with Multiple Seeds
 
@@ -830,15 +805,11 @@ mcs.save(mcs.value_array)
 
 mcs.load(mcs.value_array)
 
-a = np.zeros_like(mcs.value_array)
-a
-
-mcs.load(a)
-a
-
 mcs.value_array
 
-plt.plot(mcs.value_delta)
+plt.plot(mcs.value_delta, label="delta_norm")
+plt.title("delta norm between mc value array and ground truth policy evaluation")
+plt.legend()
 
 value_array = mcs.value_array.copy()
 
@@ -1200,9 +1171,3 @@ for j in range (len(heading_list)):
   plt.legend(loc="upper right")
 
 plt.show()
-
-import torch
-
-a = torch.zeros(3)
-torch.square(a[4:5])
-
