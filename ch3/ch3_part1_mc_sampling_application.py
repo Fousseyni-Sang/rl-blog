@@ -805,8 +805,6 @@ mcs.save(mcs.value_array)
 
 mcs.load(mcs.value_array)
 
-mcs.value_array
-
 plt.plot(mcs.value_delta, label="delta_norm")
 plt.title("delta norm between mc value array and ground truth policy evaluation")
 plt.legend()
@@ -1010,8 +1008,6 @@ test_state = np.array([-10.0, 10.0, 135.0])
 # --- Plot the trajectory ---
 for _ in range(1):
     return_G, traj = mcs_av.mc_rollout(test_state, "stop", plot=True, fig=True, policy=mcs_av.mc_control, is_deterministic=True, beta=1.0)
-    print(np.sum(return_G))
-    print(traj)
 
 mcs_av.load(mcs_av.action_value_array, file_name="action_value_array")
 
